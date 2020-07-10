@@ -53,7 +53,10 @@ Window {
                     border.width: 2
                 }
                 text : qsTr("Send")
-                onClicked: controller.sendMessageToServer(userName, messageInput.text);
+                onClicked: {
+                    controller.sendMessageToServer(userName, messageInput.text);
+                    messageInput.clear()
+                }
             }
         }
     }

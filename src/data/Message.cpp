@@ -20,10 +20,11 @@ Message::Message(const QByteArray &data)
         m_body = object["body"].toString();
 }
 
-QJsonObject Message::toJSon()
+QJsonObject Message::toJSon() const
 {
     return QJsonObject
     {
+        {"command","send_message"},
         {"time", m_time},
         {"sender", m_sender},
         {"body", m_body}

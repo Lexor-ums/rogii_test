@@ -8,16 +8,19 @@ ClientImitator::ClientImitator(QObject *parent) : QObject(parent)
 {
     writeWatcher = new QFutureWatcher<QJsonDocument>();
     connect(writeWatcher, &QFutureWatcher<QJsonDocument>::finished, this, &ClientImitator::writeFinished);
-    readWatcher = new QFutureWatcher<QJsonDocument>();
+    readWatcher = new QFutureWatcher<QPair<bool, QJsonDocument>>();
     connect(readWatcher, &QFutureWatcher<QJsonDocument>::finished, this, &ClientImitator::readFinished);
     isWorking = true;
+    qRegisterMetaType<Message>("Message");
 }
 
 void ClientImitator::setSocket(qintptr descriptor)
 {
     m_socket = new QTcpSocket(this);
-    connect(m_socket, &QAbstractSocket::disconnected, m_socket, &QAbstractSocket::deleteLater);
     connect(m_socket, &QTcpSocket::readyRead, this, &ClientImitator::initiateRead);
+    connect(messageRepository, &MessageRepository::signalNewMesage, this, [this](const Message &mess){
+        initiateWrite(QJsonDocument(mess.toJSon()));
+    }, Qt::QueuedConnection);
     m_socket->setSocketDescriptor(descriptor);
 
 }
@@ -41,22 +44,23 @@ void ClientImitator::initiateRead(){
 
 
 void ClientImitator::readFinished(){
-    QJsonDocument doc = readFuture.result();
-    initiateWrite(doc);
+     QPair<bool, QJsonDocument> res = readFuture.result();
+    if (res.first)
+        initiateWrite(res.second);
 }
 
 void ClientImitator::writeFinished(){
-    QJsonDocument doc = readFuture.result();
+    QJsonDocument doc = writeFuture.result();
     QByteArray data = doc.toJson();
 
-    qDebug()<<"send from serv "<<m_socket->write(data, data.size())<<m_socket->error()<<data.size();
+    qDebug()<<" "<<m_socket->write(data, data.size())<<data<<m_socket;
     m_socket->flush();
 
 }
 
- QJsonDocument ClientImitator::startRead(const QByteArray &data){
+ QPair<bool, QJsonDocument> ClientImitator::startRead(const QByteArray &data){
     QJsonDocument doc = QJsonDocument::fromJson(data);
-    QJsonDocument docRes = QJsonDocument::fromJson(data);
+    QPair<bool, QJsonDocument> docRes = {false, QJsonDocument::fromJson(data) };
     QJsonObject object  = doc.object();
     if (object.contains("command") && object["command"].isString())
     {
@@ -67,7 +71,7 @@ void ClientImitator::writeFinished(){
             {
                 QString sender = object["sender"].toString();
                 messageRepository->addMessage(sender, data);
-                docRes = doc;
+                docRes.second = doc;
             }
         }
         if (command == "get_history")
@@ -80,7 +84,8 @@ void ClientImitator::writeFinished(){
                 QString sender = object["sender"].toString();
                 QJsonArray array = messageRepository->getAllMessages(sender);
                 obj.insert("data", QJsonValue(array));
-                docRes.setObject(obj);
+                docRes.second = QJsonDocument(obj);
+                docRes.first = true;
             }
         }
     }

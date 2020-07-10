@@ -58,9 +58,10 @@ else()
       ${TS_FILES}
     )
 endif()
+set_target_properties(Qt5::Core PROPERTIES MAP_IMPORTED_CONFIG_COVERAGE "RELEASE")
 
-target_compile_definitions(rogii_test
-  PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
+#target_compile_definitions(rogii_test
+#  PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(rogii_test
   PRIVATE Qt5::Core Qt5::Quick)
 

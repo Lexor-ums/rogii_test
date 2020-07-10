@@ -1,6 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QDir>
 #include <QThread>
 #include <Sesrver.h>
 #include "UserListModel.h"
@@ -11,15 +12,17 @@ int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
-    QGuiApplication app(argc, argv);
     QStringList paths = QCoreApplication::libraryPaths();
     paths.append(".");
-    paths.append("platforms");
+    paths.append(QDir::currentPath() + "/platforms");
     QCoreApplication::setLibraryPaths(paths);
+
+    QGuiApplication app(argc, argv);
     UserListModel userListModel;
     QQmlApplicationEngine engine;
     QThread thread;
     Sesrver server;    
+    qDebug()<<QCoreApplication::libraryPaths();
     server.moveToThread(&thread);
     QObject::connect(&thread, &QThread::started, [&server](){
         server.startServer("127.0.0.1", 3000);
