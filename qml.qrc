@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>imports/Common/Constants.qml</file>
+        <file>imports/Common/qmldir</file>
+        <file>StyledTextInput.qml</file>
+        <file>ChatWindow.qml</file>
+        <file>ChatWindowCreation.js</file>
+        <file>ErrorMessage.qml</file>
     </qresource>
 </RCC>
